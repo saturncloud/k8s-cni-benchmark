@@ -2,9 +2,24 @@ apiVersion: v1
 kind: Pod
 metadata:
   labels:
+    app: k8s-cni-benchmark
     run: ftp-srv
   name: ftp-srv
 spec:
+  initContainers:
+  - image: infrabuilder/netbench:server-ftp
+    name: junk-data
+    command:
+    - /bin/bash
+    - -c
+    - |
+      if [ ! -f /data/10G.dat ]; then
+        echo "Generating junk data"
+        dd bs=1M if=/dev/urandom of=/data/10G.dat count=10000
+      fi
+    volumeMounts:
+    - name: data
+      mountPath: /data
   containers:
   - image: infrabuilder/netbench:server-ftp
     name: ftpd-srv
@@ -17,7 +32,7 @@ spec:
   volumes:
   - name: data
     hostPath:
-      path: /home/ubuntu
-  nodeSelector: 
+      path: /data/test
+  nodeSelector:
     kubernetes.io/hostname: s02
   restartPolicy: Never
